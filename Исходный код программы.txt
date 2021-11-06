@@ -1,0 +1,120 @@
+#Библиотеки
+import numpy as np
+import matplotlib.pyplot as pl
+import pandas as pd
+#
+
+
+######ФУНКЦИИ ЛАГРАНЖА:
+def l(x, X, k):
+    lk = 1
+    for i in range(len(X)):
+        if (k != i):
+            lk *= (x - X[i])/(X[k] - X[i])
+    return lk
+#
+
+
+
+#######МЕТОД ЛАГРАНЖА ПО РАВНООТСТОЯЩИМ УЗЛАМ:
+def Ln(f, x, n, a, b):
+    X = np.linspace(a, b, n)
+    P = 0
+    for i in range(n):
+        P += l(x, X, i)*f(X[i])
+    return P
+#
+
+
+
+#####МЕТОД ЛАГРАНЖА ПО ОПТИМАЛЬНОЙ СЕТКЕ:
+def Loptn(f, x, N, a, b):
+    X = []
+    n = N-1
+    for i in range(n+1):
+        xi = 1/2* ( (b-a)*np.cos( (2*i+1)*np.pi/(2*(n+1)) ) + (b+a) )
+        X.append(xi)
+    P = 0
+    for i in range(n+1):
+        P += l(x, X, i)*f(X[i])
+    return P
+#
+
+######ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ:
+def g(X, i, k):
+    result = 1
+    for j in range(k+1):
+        if (j != i):
+            result *= 1/(X[i] - X[j])
+    return result
+#
+######КОНЕЧНЫЕ РАЗНОСТИ:
+def F(X, f, k):
+    Y = list( map(f, X) )
+    result = 0
+    for i in range(k+1):
+        result += Y[i]*g(X, i, k)
+    return result
+#
+
+
+
+#########МЕТОД НЬЮТОНА ПО РАВНООТСТОЯЩИМ УЗЛАМ:
+def Newton(f, x, N, a, b):
+    X = np.linspace(a, b, N)
+    P = 0
+    w = 1
+    for i in range(N):
+        P += F(X, f, i)*w
+        w *= (x - X[i])
+    return P
+#
+
+
+#########МЕТОД НЬЮТОНА ПО ОПТИМАЛЬНОЙ СЕТКЕ:
+def NewtonOpt(f, x, N, a, b):
+    X = []
+    for i in range(N):
+        xi = 1/2* ( (b-a)*np.cos( (2*i+1)*np.pi/(2*N) ) + (b+a) )
+        X.append(xi)
+    P = 0
+    w = 1
+    for i in range(N):
+        P += F(X, f, i)*w
+        w *= (x - X[i])
+    return P
+#
+
+
+######МАКСИМААЛЬНОЕ ОТКЛОНЕНИЕ:
+def R(a, b, m, f1, f2, n):
+    r = lambda x: abs(f1(x) - f2(f1, x, n, a, b))
+    X = np.linspace(a, b, m)
+    Mx = np.max(list(map(r, X)))
+    return Mx
+#
+
+
+
+####КОНСТАНТЫ ЗАДАНИЯ
+f = lambda x: np.log10(x) + 7/( 2*x + 6)                #ФУНКЦИЙ (НОМЕР В ГРУППЕ - 5)
+A = 1                                                   #ОТЕЗОК
+B = 100                                                 #ИНТЕРПОЛЯЦИИ
+X = 31.5                                                #СЛУЧАЙНАЯ ТОЧКА НА ОТРЕЗКЕ ИНТЕРПОЛИРОВАНИЯ
+N = 10                                                  #КОЛИЧЕСТВО УЗЛОВ
+M = 200                                                 #КОЛИЧЕСТВО ТЕСТОВЫХ ТОЧЕК (M >> N)
+#
+
+##КОД:
+print('Interpolated function: ', f(X))
+print('Lagrange: ', Ln(f, X, N, A, B))
+print('LagrngeN: ', Loptn(f, X, N, A, B))
+print('Newton: ', Newton(f, X, N, A, B))
+print('NewtonOpt: ', NewtonOpt(f, X, N, A, B))
+print()
+print('Максимальные отклонения: ')
+
+print('Lagrange: ', R(A, B, M, f, Ln, N))
+print('LagrngeN: ', R(A, B, M, f, Loptn, N))
+print('Newton: ', R(A, B, M, f, Newton, N))
+print('NewtonOpt: ', R(A, B, M, f, NewtonOpt, N))
